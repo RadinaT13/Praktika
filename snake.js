@@ -3,13 +3,25 @@ const ctx = canvas.getContext('2d');
 const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('game-over');
 const finalScoreDisplay = document.getElementById('final-score');
+const backgroundMusic = document.getElementById('background-music');
+const playButton = document.getElementById('play-button');
 
 const gridSize = 20;
-const tileCount = canvas.width / gridSize;
+let tileCountX;
+let tileCountY;
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    tileCountX = Math.floor(canvas.width / gridSize);
+    tileCountY = Math.floor(canvas.height / gridSize);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 let snake = [{ x: 10, y: 10 }];
 let direction = { x: 0, y: 0 };
-let food = { x: 15, y: 15 };
+let food = { x: Math.floor(Math.random() * tileCountX), y: Math.floor(Math.random() * tileCountY) };
 let score = 0;
 
 const snakeHeadImg = new Image();
@@ -17,6 +29,21 @@ snakeHeadImg.src = 'snake_head.png';
 
 const foodImg = new Image();
 foodImg.src = 'food.png';
+
+// Ensure music is paused initially
+backgroundMusic.pause();
+backgroundMusic.currentTime = 0;
+
+// Play button functionality
+playButton.addEventListener('click', () => {
+    if (backgroundMusic.paused) {
+        backgroundMusic.play();
+        playButton.textContent = 'Pause Music';
+    } else {
+        backgroundMusic.pause();
+        playButton.textContent = 'Play Music';
+    }
+});
 
 document.addEventListener('keydown', changeDirection);
 
@@ -54,6 +81,8 @@ function gameLoop() {
     } else {
         finalScoreDisplay.textContent = score;
         gameOverDisplay.style.display = 'block';
+        backgroundMusic.pause();
+        playButton.textContent = 'Play Music';
     }
 }
 
@@ -63,7 +92,7 @@ function update() {
     if (head.x === food.x && head.y === food.y) {
         score++;
         scoreDisplay.textContent = `Score: ${score}`;
-        food = { x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount) };
+        food = { x: Math.floor(Math.random() * tileCountX), y: Math.floor(Math.random() * tileCountY) };
     } else {
         snake.pop();
     }
@@ -81,17 +110,21 @@ function draw() {
     // Draw snake head
     ctx.drawImage(snakeHeadImg, snake[0].x * gridSize, snake[0].y * gridSize, gridSize, gridSize);
 
-    // Draw snake body
-    ctx.fillStyle = '#00FF00';
+    // Draw snake body as lines
+    ctx.strokeStyle = '#00FF00';
+    ctx.lineWidth = gridSize;
+    ctx.beginPath();
+    ctx.moveTo(snake[0].x * gridSize + gridSize / 2, snake[0].y * gridSize + gridSize / 2);
     for (let i = 1; i < snake.length; i++) {
-        ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize, gridSize);
+        ctx.lineTo(snake[i].x * gridSize + gridSize / 2, snake[i].y * gridSize + gridSize / 2);
     }
+    ctx.stroke();
 }
 
 function isGameOver() {
     const head = snake[0];
 
-    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+    if (head.x < 0 || head.x >= tileCountX || head.y < 0 || head.y >= tileCountY) {
         return true;
     }
 
